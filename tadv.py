@@ -33,14 +33,14 @@ def pull_data(directions):
     v = ds_sliced['v-component_of_wind_isobaric'].sel(isobaric=slice(50000, 100000))
     z = ds_sliced['Geopotential_height_isobaric'].sel(isobaric=slice(50000, 100000))
     temp = ds_sliced['Temperature_isobaric'].sel(isobaric=slice(50000, 100000))
-    mslp = ds_sliced['MSLP_Eta_model_reduction_msl']
     pressure_levels = u['isobaric'].values[::-1]
     time = time_dim(ds, 'u-component_of_wind_isobaric')
-    return u, v, z, temp, mslp, pressure_levels, time
+    return u, v, z, temp, pressure_levels, time
 
-def plot_tadv_data(g, u, v, z, temp, mslp, pressure_levels, directions, time, desired_pressure_level):
+def plot_tadv(u, v, z, temp, pressure_levels, directions, time, desired_pressure_level):
     # Check and or convert the desired pressure level to an integer
     desired_pressure_level = int(desired_pressure_level)
+
     # Select the model initialization time 
     int_time = u[time][0].values
     
@@ -51,7 +51,6 @@ def plot_tadv_data(g, u, v, z, temp, mslp, pressure_levels, directions, time, de
         v_i = v.isel(**{time: i})
         z_i = z.isel(**{time: i})
         temp_i = temp.isel(**{time: i})
-        mslp_i = mslp.isel(**{time: i})
         time_values = u_i[time].values
         
         # Select the variables at the pressure levels of interest
@@ -74,7 +73,6 @@ def plot_tadv_data(g, u, v, z, temp, mslp, pressure_levels, directions, time, de
 
         # Convert to an array 
         tadv_da = xr.DataArray(tadv_level_hr, dims=['lat', 'lon'], coords={'lat': u['lat'], 'lon': u['lon']}, name=f'tadv_time_{i}')
-        print(tadv_da)
 
         # Use Pandas to convert the time to a datetime object for plotting
         int_datetime_index = pd.DatetimeIndex([int_time])
@@ -114,7 +112,6 @@ def plot_tadv_data(g, u, v, z, temp, mslp, pressure_levels, directions, time, de
         plt.colorbar(cf, extend='max', orientation='vertical', label='C/hr', fraction=0.046, pad=0.04)
         ax.barbs(u_ij_level['lon'][::step], u_ij_level['lat'][::step], u_ij_level[::step, ::step], v_ij_level[::step, ::step], length=6, color='black')
 
-
         # Plot the statelines, etc. 
         ax.set_extent([directions['West'], directions['East'], directions['South'], directions['North']-1])
         ax.add_feature(cfeature.COASTLINE.with_scale('10m'), linewidth=0.5, zorder=1)
@@ -132,12 +129,11 @@ def plot_tadv_data(g, u, v, z, temp, mslp, pressure_levels, directions, time, de
         plt.tight_layout()
         plt.show()
 
-
 if __name__ == '__main__':
     directions = {'North': 51, 
                   'East': 250, 
                   'South': 20, 
                   'West': 200}
     desired_pressure_level = 850 # Units in hPa
-    (u, v, z, temp, mslp, pressure_levels, time) = pull_data(directions)
-    plot_tadv_data(g, u, v, z, temp, mslp, pressure_levels, directions, time, desired_pressure_level)
+    (u, v, z, temp, pressure_levels, time) = pull_data(directions)
+    plot_tadv(u, v, z, temp, pressure_levels, directions, time, desired_pressure_level)
