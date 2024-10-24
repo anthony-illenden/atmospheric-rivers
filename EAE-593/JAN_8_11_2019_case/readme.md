@@ -1,0 +1,1 @@
+This AR did not have a MFW or Scyc
